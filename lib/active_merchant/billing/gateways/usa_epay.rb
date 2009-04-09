@@ -10,9 +10,12 @@ module ActiveMerchant #:nodoc:
       self.display_name = 'USA ePay'
 
       TRANSACTIONS = {
-        :authorization => 'authonly',
-        :purchase => 'sale',
-        :capture => 'capture'
+        :authorization => 'cc:authonly',
+        :purchase => 'cc:sale',
+        :capture => 'cc:capture',
+        :credit => 'cc:credit',
+        :void => 'void',
+        :refund => 'refund'
       }
 
       def initialize(options = {})
@@ -26,8 +29,8 @@ module ActiveMerchant #:nodoc:
         
         add_amount(post, money)
         add_invoice(post, options)
-        add_credit_card(post, credit_card)        
-        add_address(post, credit_card, options)        
+        add_credit_card(post, credit_card)
+        add_address(post, credit_card, options)
         add_customer_data(post, options)
         
         commit(:authorization, post)
@@ -39,7 +42,7 @@ module ActiveMerchant #:nodoc:
         add_amount(post, money)
         add_invoice(post, options)
         add_credit_card(post, credit_card)        
-        add_address(post, credit_card, options)   
+        add_address(post, credit_card, options)
         add_customer_data(post, options)
              
         commit(:purchase, post)
@@ -53,7 +56,33 @@ module ActiveMerchant #:nodoc:
         add_amount(post, money)
         commit(:capture, post)
       end
-       
+      
+      def void(authorization, options = {})
+        post = {
+          :refNum => authorization
+        }
+        commit(:credit, post)
+      end
+      
+      def credit(money, authorization, options = {})
+        post = {
+          :refNum => authorization
+        }
+        add_amount(post, money)
+        commit(:refund, post)
+      end
+      
+      def credit_without_auth(money, credit_card, options = {})
+        post = {}
+        
+        add_amount(post, money)
+        add_invoice(post, options)
+        add_credit_card(post, credit_card)
+        add_address(post, credit_card, options)
+        add_customer_data(post, options)
+        commit(:credit, post)
+      end
+      
       private                       
     
       def add_amount(post, money)
